@@ -1,0 +1,381 @@
+{
+  "name": "checkpoint1_chiara_facal",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.5,
+      "position": [
+        0,
+        0
+      ],
+      "id": "f3665d8d-100e-4f30-b06c-69c09185fdb0",
+      "name": "When chat message received",
+      "webhookId": "10c52c27-5d27-4962-9bd0-f49794479542"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "# ROL\nSos el Asistente de Calificación de Leads de Chiara.co, una empresa de organización de eventos corporativos. Atendés a empresas interesadas en organizar eventos y evaluás qué tan buen candidato comercial es cada una.\n\n# ÁMBITO\n- Atendés únicamente consultas comerciales de potenciales clientes.\n- Trabajás solo con la información que el lead te da en la conversación.\n- No atendés soporte técnico, reclamos, temas de facturación ni consultas ajenas a nuestros servicios.\n- Organizamos eventos corporativos: lanzamientos, fiestas de fin de año, capacitaciones, congresos, team building y reuniones de empresa.\n- No organizamos eventos sociales ni particulares (casamientos, cumpleaños, quinceañeras).\n\n# OBJETIVO DE LA SESIÓN\n1. Conversar de forma cordial y breve para recolectar estos datos: Nombre, empresa, email, tipo de evento, cantidad aproximada de asistentes, fecha tentativa, presupuesto aproximado y si quien escribe es quien decide la contratación.\n2. Calcular un score de 0 a 100 y clasificar al lead como CALIENTE (70-100), TIBIO (40-69) o FRÍO (0-39).\n3. Registrar el lead calificado usando la herramienta de registro.\n\n# CRITERIOS DE SCORE\n- Tipo de evento claro y alineado con nuestros servicios: hasta 20 puntos.\n- Presupuesto definido y coherente con la escala del evento: hasta 25 puntos.\n- Fecha definida y cercana (menos de 3 meses): hasta 25 puntos.\n- Cantidad de asistentes definida: hasta 10 puntos.\n- Quien escribe decide o participa en la decisión: hasta 20 puntos.\n\n# REGLAS\n# REGLAS\n- Preguntá de a una o dos cosas por mensaje; no hagas un interrogatorio.\n- Nunca inventes datos. Si falta un dato, registralo como \"No informado\".\n- Nunca inventes precios, descuentos, promociones ni plazos de entrega.\n- No prometas reuniones, llamadas ni condiciones comerciales.\n- Usá un tono profesional y cercano, con voseo neutro.\n- Escribí siempre sin lenguaje inclusivo: no uses desdoblamientos ni símbolos. Usá formas neutras y directas como \"bienvenido\" o \"equipo\".\n\n## Cuándo registrar al lead\n- No registres al lead hasta haber preguntado por tipo de evento, cantidad de asistentes, fecha, presupuesto y si quien escribe decide la contratación.\n- Registralo una sola vez por conversación, con la herramienta de registro, cuando tengas respuesta a esos puntos o cuando el lead indique que no quiere darlos (en ese caso completá con \"No informado\").\n- Como mínimo necesitás nombre, email y tipo de evento. Si falta alguno de los tres, pedilo antes de registrar.\n- Calculá el score y la clasificación recién cuando vayas a registrar, con todos los datos que el lead haya dado hasta ese momento.\n\n## Si el lead agrega o corrige datos después del registro\n- Agradecé la información y no vuelvas a registrar ni uses la herramienta otra vez.\n- Indicale que el equipo comercial revisará su consulta con los datos actualizados.\n- Si el cambio es importante (por ejemplo, un presupuesto o una fecha muy distintos), derivalo al equipo comercial y aclarale que alguien lo contactará.\n\n# ACCIONES PROHIBIDAS\n- No des asesoramiento legal, financiero ni técnico.\n- No compartas información de otros leads.\n- No modifiques ni borres registros existentes.\n- No registres datos de personas que pidan expresamente no ser contactadas.\n\n# ESCALAMIENTO A UN HUMANO\nDerivá al equipo comercial, indicándole al lead que alguien lo contactará, cuando:\n- Pida hablar con una persona.\n- Tenga un reclamo o muestre enojo.\n- Pida condiciones comerciales específicas (descuentos, contratos, precios especiales).\n- Haga una consulta que esté fuera de tu ámbito.\nEn esos casos registrá igualmente al lead con el motivo de escalamiento en el resumen.",
+          "maxIterations": 5,
+          "returnIntermediateSteps": true
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        224,
+        0
+      ],
+      "id": "fff6def8-88c7-4ade-8293-d52b96cd3231",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-120b",
+        "options": {
+          "maxTokensToSample": 1500,
+          "temperature": 0.2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        96,
+        208
+      ],
+      "id": "e0dd51ea-d19d-45a8-af01-f7c596a2f3e6",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "0xNos0enFVKeUU9k",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "cfacal@udesa.edu.ar",
+        "subject": "=Reporte agente leads - {{ $now.format('yyyy-MM-dd HH:mm') }}",
+        "emailType": "text",
+        "message": "=RESPUESTA FINAL DEL AGENTE: {{ $json.output }} \n\nLOG DE EJECUCIÓN (pasos del agente): {{ ($json.intermediateSteps || []).length ? JSON.stringify($json.intermediateSteps, null, 2) : 'El agente no usó herramientas en este turno.' }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        960,
+        96
+      ],
+      "id": "2f1919e0-1465-4d41-865a-985221605b78",
+      "name": "Send a message",
+      "webhookId": "19158d0e-5eef-4c30-8f31-baab40950a1d",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pLCg97mBo1yO4Fld",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "98c075b8-9f97-453a-81c9-abe8a6ed4e06",
+              "name": "output",
+              "value": "={{ $('AI Agent').item.json.output }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1136,
+        96
+      ],
+      "id": "7291389f-a4d6-4864-bf50-60389515611e",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        336,
+        176
+      ],
+      "id": "14006cf7-890d-4f86-b198-8366c73c62c2",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Usá esta herramienta para registrar un lead calificado en la planilla de leads de ventas. \n\nCUÁNDO ACTIVARLA:\n- Cuando ya hayas preguntado por tipo de evento, asistentes, fecha, presupuesto y si decide, y tengas como mínimo nombre, email y tipo de evento (o el lead haya indicado que no quiere dar más datos).\n- Cuando hayas calculado el score y la clasificación (CALIENTE, TIBIO o FRÍO).\n- Cuando el lead pida hablar con una persona o necesite ser derivado: en ese caso registralo igualmente, indicando el motivo de escalamiento en el campo resumen.\n\nCUÁNDO NO ACTIVARLA:\n- Si todavía estás recolectando datos y faltan los mínimos.\n- Si el lead ya fue registrado en esta misma conversación.\nSi el lead ya fue registrado, aunque después agregue o corrija información.\n- Si la consulta no es comercial (soporte, reclamos, temas ajenos).\n- Si la persona pidió no ser contactada.\n\nQUÉ DEBE CONTENER CADA CAMPO:\n- nombre, empresa, email: tal como los informó el lead; si faltan, \"No informado\".\n- necesidad: resumen en una frase de lo que busca.\n- presupuesto y plazo: lo informado, o \"No informado\".\n- es_decisor: \"Sí\", \"No\" o \"No informado\".\n- score: número de 0 a 100 según los criterios de tu instrucción de sistema.\n- clasificacion: CALIENTE, TIBIO o FRÍO.\n- resumen: 2 o 3 líneas con el contexto de la conversación y, si corresponde, el motivo de escalamiento.\n\nLa herramienta agrega una fila nueva; no modifica ni elimina registros existentes.",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1GgW3VHF1KgQ7Rm4diXCtEQrl2BrCHzol6sdiQ-QD0uU",
+          "mode": "list",
+          "cachedResultName": "Leads calificados",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1GgW3VHF1KgQ7Rm4diXCtEQrl2BrCHzol6sdiQ-QD0uU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Hoja 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1GgW3VHF1KgQ7Rm4diXCtEQrl2BrCHzol6sdiQ-QD0uU/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Fecha": "={{ $now.format('yyyy-MM-dd HH:mm') }}",
+            "Nombre": "={{ $fromAI('Nombre', ``, 'string') }}",
+            "Empresa": "={{ $fromAI('Empresa', ``, 'string') }}",
+            "Email": "={{ $fromAI('Email', ``, 'string') }}",
+            "Presupuesto": "={{ $fromAI('Presupuesto', ``, 'string') }}",
+            "Es_decisor": "={{ $fromAI('Es_decisor', ``, 'string') }}",
+            "Resumen": "={{ $fromAI('Resumen', ``, 'string') }}",
+            "Tipo_evento": "={{ $fromAI('Tipo_evento', ``, 'string') }}",
+            "Asistentes": "={{ $fromAI('Asistentes', ``, 'string') }}",
+            "Fecha_evento": "={{ $fromAI('Fecha_evento', ``, 'string') }}",
+            "Score ": "={{ $fromAI('Score_', ``, 'string') }}",
+            "Clasificación": "={{ $fromAI('Clasificaci_n', ``, 'string') }}"
+          },
+          "matchingColumns": [
+            "Fecha"
+          ],
+          "schema": [
+            {
+              "id": "Fecha",
+              "displayName": "Fecha",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Nombre",
+              "displayName": "Nombre",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Empresa",
+              "displayName": "Empresa",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Tipo_evento",
+              "displayName": "Tipo_evento",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Asistentes",
+              "displayName": "Asistentes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Fecha_evento",
+              "displayName": "Fecha_evento",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Presupuesto",
+              "displayName": "Presupuesto",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Es_decisor",
+              "displayName": "Es_decisor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Score ",
+              "displayName": "Score ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Clasificación",
+              "displayName": "Clasificación",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Resumen",
+              "displayName": "Resumen",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        448,
+        208
+      ],
+      "id": "1e71390f-a920-4651-b0f5-bd1302ed41f7",
+      "name": "registrar_lead",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "zxwVgvsD596deylb",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "registrar_lead": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "ae9fa46c-67a8-4147-8f06-ade2981c8b21",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "efbba6eed052ccf782fbd4537c6d0955f79350a7379ff471a5d6d3eeb9aa49fe"
+  },
+  "nodeGroups": [],
+  "id": "WZfTUKacxsjfhEix",
+  "tags": []
+}
